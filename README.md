@@ -76,6 +76,10 @@ accent-coach/
   - macOS: `brew install python3` or download from [python.org](https://www.python.org/downloads/)
   - Windows: Download from [python.org](https://www.python.org/downloads/) (check "Add to PATH" during install)
   - Linux: Usually pre-installed, or `sudo apt install python3 python3-venv`
+- **ffmpeg** (for audio processing)
+  - macOS: `brew install ffmpeg`
+  - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
+  - Linux: `sudo apt install ffmpeg`
 
 ### Setup & Run (2 commands)
 
