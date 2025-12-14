@@ -3,9 +3,26 @@ import tempfile
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from pydub import AudioSegment
 
 from grading_engine import get_pronunciation_score
 from coaching_engine import get_coaching_tips
+
+
+def convert_to_wav(input_path: str, output_path: str) -> bool:
+    """
+    Convert any audio format to WAV (16kHz, mono, 16-bit PCM).
+    Azure Speech SDK requires proper WAV format.
+    """
+    try:
+        audio = AudioSegment.from_file(input_path)
+        # Convert to format Azure expects: 16kHz, mono, 16-bit PCM
+        audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+        audio.export(output_path, format="wav")
+        return True
+    except Exception as e:
+        print(f"Audio conversion error: {e}")
+        return False
 
 # Load environment variables
 load_dotenv()
@@ -76,18 +93,23 @@ async def analyze_pronunciation(
     Analyze pronunciation from audio file.
     Returns scores and coaching tips.
     """
+    temp_input = None
+    temp_wav = None
+    
     try:
-        # Save uploaded audio to temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+        # Save uploaded audio to temp file (browser sends webm/ogg, not wav)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_file:
             content = await audio.read()
             temp_file.write(content)
-            temp_filepath = temp_file.name
+            temp_input = temp_file.name
+
+        # Convert to proper WAV format for Azure Speech SDK
+        temp_wav = temp_input.replace(".webm", "_converted.wav")
+        if not convert_to_wav(temp_input, temp_wav):
+            raise HTTPException(status_code=400, detail="Failed to process audio. Please try recording again.")
 
         # Get pronunciation scores from Azure
-        scores = get_pronunciation_score(temp_filepath, reference_text)
-        
-        # Clean up temp file
-        os.unlink(temp_filepath)
+        scores = get_pronunciation_score(temp_wav, reference_text)
         
         # Check for errors
         if "error" in scores and scores.get("pronunciation", 0) == 0:
@@ -111,6 +133,12 @@ async def analyze_pronunciation(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temp files
+        if temp_input and os.path.exists(temp_input):
+            os.unlink(temp_input)
+        if temp_wav and os.path.exists(temp_wav):
+            os.unlink(temp_wav)
 
 
 @app.get("/api/health")

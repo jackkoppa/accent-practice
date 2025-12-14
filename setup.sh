@@ -12,6 +12,7 @@ echo ""
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Check for Python
@@ -33,6 +34,25 @@ if command -v node &> /dev/null; then
 else
     echo "❌ Node.js not found. Please install Node.js 18+ first."
     exit 1
+fi
+
+# Check for ffmpeg (needed for audio conversion)
+echo -e "${BLUE}Checking ffmpeg...${NC}"
+if command -v ffmpeg &> /dev/null; then
+    echo "✓ Found ffmpeg"
+else
+    echo -e "${YELLOW}⚠️  ffmpeg not found. Audio processing requires ffmpeg.${NC}"
+    echo ""
+    echo "   Install ffmpeg:"
+    echo "   • macOS:   brew install ffmpeg"
+    echo "   • Ubuntu:  sudo apt install ffmpeg"
+    echo "   • Windows: Download from https://ffmpeg.org/download.html"
+    echo ""
+    read -p "   Continue anyway? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
 fi
 
 echo ""
