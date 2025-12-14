@@ -1,5 +1,6 @@
-streamlit
-audio-recorder-streamlit
+fastapi
+uvicorn[standard]
+python-multipart
 openai
 azure-cognitiveservices-speech
 python-dotenv
