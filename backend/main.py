@@ -1,4 +1,6 @@
 import os
+import io
+import wave
 import tempfile
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,17 +13,38 @@ from coaching_engine import get_coaching_tips
 
 def convert_to_wav(input_path: str, output_path: str) -> bool:
     """
-    Convert any audio format to WAV (16kHz, mono, 16-bit PCM).
-    Azure Speech SDK requires proper WAV format.
+    Convert any audio format to WAV format that Azure Speech SDK accepts.
+    Azure requires: PCM, 16kHz, 16-bit, mono, with proper RIFF header.
     """
     try:
+        # Load audio with pydub (uses ffmpeg under the hood)
         audio = AudioSegment.from_file(input_path)
-        # Convert to format Azure expects: 16kHz, mono, 16-bit PCM
+        
+        # Convert to Azure-compatible format: 16kHz, mono, 16-bit
         audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
-        audio.export(output_path, format="wav")
-        return True
+        
+        # Get raw PCM data
+        raw_data = audio.raw_data
+        
+        # Write proper WAV file using wave module (guarantees correct header)
+        with wave.open(output_path, 'wb') as wav_file:
+            wav_file.setnchannels(1)          # Mono
+            wav_file.setsampwidth(2)          # 16-bit (2 bytes)
+            wav_file.setframerate(16000)      # 16kHz
+            wav_file.writeframes(raw_data)
+        
+        # Verify the file was created and has content
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 44:  # 44 = WAV header size
+            print(f"Audio converted successfully: {os.path.getsize(output_path)} bytes")
+            return True
+        else:
+            print("Audio conversion produced empty or invalid file")
+            return False
+            
     except Exception as e:
         print(f"Audio conversion error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # Load environment variables
