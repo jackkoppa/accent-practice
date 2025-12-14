@@ -1,8 +1,9 @@
 # Environment variables (contains secrets)
 .env
+backend/.env
 
 # Temporary audio files
-temp_audio.wav
+*.wav
 
 # Python
 __pycache__/
@@ -32,6 +33,11 @@ ENV/
 env/
 .venv/
 
+# Node.js
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
 # IDE
 .idea/
 .vscode/
@@ -42,5 +48,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# Streamlit
-.streamlit/secrets.toml
+# Logs
+*.log
+npm-debug.log*

@@ -1,79 +1,142 @@
 # 🎙️ AI Accent Coach
 
-A web-based application that helps users correct their English accent. Unlike standard voice assistants that tolerate accents, this app is designed to detect specific phonemic deviations and provide actionable coaching.
+A modern web application that helps users improve their English pronunciation. Unlike standard voice assistants that tolerate accents, this app detects specific phonemic deviations and provides actionable coaching.
+
+![AI Accent Coach](https://img.shields.io/badge/React-18-blue?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript) ![FastAPI](https://img.shields.io/badge/FastAPI-Python-green?logo=fastapi) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38bdf8?logo=tailwindcss)
+
+## Features
+
+- 🎤 **Browser-based audio recording** - No software installation required
+- 📊 **Real-time pronunciation scoring** - Pronunciation, Fluency, and Completeness metrics
+- 🎯 **AI-powered coaching** - Personalized tips from GPT-4 based on your performance
+- 📚 **Practice sentences** - Curated sentences targeting different sounds and difficulty levels
+- 🎨 **Modern UI** - Clean, responsive design with beautiful animations
 
 ## Architecture
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| Frontend/Backend | Streamlit (Python) | Rapid prototyping, audio recording |
+| Frontend | React + TypeScript + Tailwind CSS | Modern, responsive UI |
+| Backend | FastAPI (Python) | API endpoints, orchestration |
 | Grading Engine | Azure AI Speech | Phoneme-level pronunciation assessment |
 | Coaching Engine | OpenAI API (GPT-4o) | Pedagogical feedback generation |
 
 ### How It Works
 
-1. **User records audio** in the browser (Streamlit audio recorder)
-2. **App sends audio + reference text** to Azure Speech API
-3. **Azure returns scores** (Pronunciation, Fluency, Completeness) and phoneme errors
-4. **App sends Azure JSON to OpenAI** for interpretation
-5. **OpenAI generates coaching tips** with actionable advice
-6. **App displays scores and feedback** to the user
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Browser   │────▶│   FastAPI   │────▶│    Azure    │
+│  (React UI) │     │   Backend   │     │   Speech    │
+└─────────────┘     └──────┬──────┘     └─────────────┘
+                          │
+                          ▼
+                   ┌─────────────┐
+                   │   OpenAI    │
+                   │   GPT-4o    │
+                   └─────────────┘
+```
+
+1. User records audio in the browser
+2. Audio is sent to FastAPI backend
+3. Backend calls Azure Speech for pronunciation assessment
+4. Scores are sent to OpenAI for coaching interpretation
+5. Results displayed with beautiful visualizations
 
 ## Project Structure
 
 ```
 accent-coach/
-├── app.py                # Main Streamlit application entry point
-├── grading_engine.py     # Wraps Azure SDK logic
-├── coaching_engine.py    # Wraps OpenAI API logic
-├── Dockerfile            # Instructions for building the container
-├── requirements.txt      # Python dependencies
-├── .env.example          # Template for environment variables
-└── .gitignore            # Git ignore rules
+├── backend/
+│   ├── main.py              # FastAPI application
+│   ├── grading_engine.py    # Azure Speech SDK wrapper
+│   ├── coaching_engine.py   # OpenAI API wrapper
+│   └── requirements.txt     # Python dependencies
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx          # Main application component
+│   │   ├── components/      # React components
+│   │   │   ├── AudioRecorder.tsx
+│   │   │   ├── SentenceCard.tsx
+│   │   │   ├── ScoreRing.tsx
+│   │   │   └── ResultsPanel.tsx
+│   │   ├── types.ts         # TypeScript types
+│   │   └── index.css        # Tailwind styles
+│   ├── package.json
+│   └── index.html
+├── .env.example             # Environment template
+└── README.md
 ```
 
-## Local Development Setup
+## Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
+
+- Python 3.9+
+- Node.js 18+
+- npm or yarn
+
+### 1. Clone and Setup
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd accent-coach
+
+# Copy environment file
+cp .env.example backend/.env
+```
+
+### 2. Install Backend Dependencies
+
+```bash
+cd backend
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables
-
-Copy the example environment file and fill in your API keys:
+### 3. Install Frontend Dependencies
 
 ```bash
-cp .env.example .env
+cd frontend
+npm install
 ```
 
-Edit `.env` with your credentials:
+### 4. Configure API Keys (Optional)
 
-```
-# OpenAI - https://platform.openai.com/api-keys
+Edit `backend/.env` with your credentials:
+
+```env
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxx
-
-# Azure Speech Services - https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeech
 AZURE_SPEECH_KEY=xxxxxxxxxxxx
 AZURE_SPEECH_REGION=eastus
 ```
 
-### 3. Run the Application
+> **Note:** The app works without API keys in **demo mode** with sample scores.
 
+### 5. Run the Application
+
+Open two terminal windows:
+
+**Terminal 1 - Backend:**
 ```bash
-streamlit run app.py
+cd backend
+uvicorn main:app --reload --port 8000
 ```
 
-The app will be available at `http://localhost:8501`
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Open your browser to `http://localhost:5173`
 
 ## Demo Mode
 
-The app works without API keys in **demo mode**:
+The app works without API keys:
 - **Without Azure keys**: Returns mock pronunciation scores (85/90/95)
 - **Without OpenAI key**: Returns placeholder coaching feedback
 
-This allows you to test the UI without any API credentials.
+This allows you to test the full UI without any API credentials.
 
 ## Getting API Keys
 
@@ -87,20 +150,27 @@ This allows you to test the UI without any API credentials.
 2. Create a new API key
 3. Ensure you have access to GPT-4o model
 
-## Docker (For Future Deployment)
+## API Endpoints
 
-Build and run with Docker:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/sentences` | GET | Get list of practice sentences |
+| `/api/analyze` | POST | Analyze pronunciation from audio |
+| `/api/health` | GET | Health check with API status |
 
+## Development
+
+### Backend
 ```bash
-# Build the image
-docker build -t accent-coach .
+cd backend
+uvicorn main:app --reload --port 8000
+```
 
-# Run the container
-docker run -p 8501:8501 \
-  -e AZURE_SPEECH_KEY=your_key \
-  -e AZURE_SPEECH_REGION=your_region \
-  -e OPENAI_API_KEY=your_key \
-  accent-coach
+### Frontend
+```bash
+cd frontend
+npm run dev      # Development server
+npm run build    # Production build
 ```
 
 ## License

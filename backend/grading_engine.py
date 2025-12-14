@@ -7,13 +7,13 @@ except ImportError:
     speechsdk = None
 
 
-def get_pronunciation_score(audio_filepath, reference_text):
+def get_pronunciation_score(audio_filepath: str, reference_text: str) -> dict:
     """
     Sends audio to Azure for phoneme-level grading.
     Returns a dictionary of scores.
     """
     
-    # 1. Check for API Keys
+    # Check for API Keys
     azure_key = os.getenv("AZURE_SPEECH_KEY")
     azure_region = os.getenv("AZURE_SPEECH_REGION")
     
@@ -37,7 +37,7 @@ def get_pronunciation_score(audio_filepath, reference_text):
             "details": "Running in mock mode (Azure SDK not installed)"
         }
 
-    # 2. Real Azure Implementation
+    # Real Azure Implementation
     try:
         speech_config = speechsdk.SpeechConfig(subscription=azure_key, region=azure_region)
         audio_config = speechsdk.audio.AudioConfig(filename=audio_filepath)
@@ -60,7 +60,6 @@ def get_pronunciation_score(audio_filepath, reference_text):
         if result.reason == speechsdk.ResultReason.RecognizedSpeech:
             pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
             
-            # Return high-level scores + the raw JSON for the LLM
             return {
                 "pronunciation": pronunciation_result.pronunciation_score,
                 "fluency": pronunciation_result.fluency_score,
