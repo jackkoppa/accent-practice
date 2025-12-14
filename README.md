@@ -71,36 +71,27 @@ accent-coach/
 
 ### Prerequisites
 
-- Python 3.9+
-- Node.js 18+
-- npm or yarn
+- **Node.js 18+** (you probably have this)
+- **Python 3.9+** (check with `python3 --version`)
+  - macOS: `brew install python3` or download from [python.org](https://www.python.org/downloads/)
+  - Windows: Download from [python.org](https://www.python.org/downloads/) (check "Add to PATH" during install)
+  - Linux: Usually pre-installed, or `sudo apt install python3 python3-venv`
 
-### 1. Clone and Setup
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd accent-coach
-
-# Copy environment file
-cp .env.example backend/.env
-```
-
-### 2. Install Backend Dependencies
+### Setup & Run (2 commands)
 
 ```bash
-cd backend
-pip install -r requirements.txt
+# 1. First time only - installs everything
+./setup.sh
+
+# 2. Start the app (runs both servers)
+./start.sh
 ```
 
-### 3. Install Frontend Dependencies
+That's it! Open **http://localhost:5173** in your browser.
 
-```bash
-cd frontend
-npm install
-```
+> **Windows users:** Run `bash setup.sh` and `bash start.sh` in Git Bash, or see [Manual Setup](#manual-setup) below.
 
-### 4. Configure API Keys (Optional)
+### Add API Keys (Optional)
 
 Edit `backend/.env` with your credentials:
 
@@ -112,23 +103,39 @@ AZURE_SPEECH_REGION=eastus
 
 > **Note:** The app works without API keys in **demo mode** with sample scores.
 
-### 5. Run the Application
+---
 
-Open two terminal windows:
+### Manual Setup
 
-**Terminal 1 - Backend:**
+If the scripts don't work, here are the manual steps:
+
 ```bash
+# Backend (one-time)
 cd backend
-uvicorn main:app --reload --port 8000
+python3 -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp ../.env.example .env
+
+# Frontend (one-time)
+cd ../frontend
+npm install
 ```
 
-**Terminal 2 - Frontend:**
+To run manually (two terminals):
+
 ```bash
+# Terminal 1 - Backend
+cd backend
+source venv/bin/activate      # Windows: venv\Scripts\activate
+uvicorn main:app --reload --port 8000
+
+# Terminal 2 - Frontend  
 cd frontend
 npm run dev
 ```
 
-Open your browser to `http://localhost:5173`
+Open **http://localhost:5173**
 
 ## Demo Mode
 
@@ -160,17 +167,23 @@ This allows you to test the full UI without any API credentials.
 
 ## Development
 
-### Backend
+### Quick Start
 ```bash
-cd backend
-uvicorn main:app --reload --port 8000
+./start.sh       # Runs both backend and frontend
 ```
 
-### Frontend
+### Run Separately
 ```bash
-cd frontend
-npm run dev      # Development server
-npm run build    # Production build
+# Backend
+cd backend && source venv/bin/activate && uvicorn main:app --reload --port 8000
+
+# Frontend
+cd frontend && npm run dev
+```
+
+### Build for Production
+```bash
+cd frontend && npm run build
 ```
 
 ## License
