@@ -24,7 +24,7 @@ if [ ! -f ".env.deploy" ]; then
     echo "Error: .env.deploy file not found."
     echo ""
     echo "Please create it from the example:"
-    echo "  cp .env.deploy.example .env.deploy"
+    echo "  cp env.deploy.example .env.deploy"
     echo ""
     echo "Then edit .env.deploy and set your AWS_PROFILE."
     exit 1

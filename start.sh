@@ -24,7 +24,7 @@ fi
 # Check for .env file
 if [ ! -f "backend/.env" ]; then
     echo -e "${YELLOW}⚠️  No backend/.env file found. Creating from template...${NC}"
-    cp .env.example backend/.env
+    cp backend/env.example backend/.env
     echo "   Please add your API keys to backend/.env"
     echo ""
 fi
