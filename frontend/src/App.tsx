@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mic, Volume2, Github } from 'lucide-react';
+import { Mic, Volume2, Github, Settings } from 'lucide-react';
 import { AudioRecorder } from './components/AudioRecorder';
 import { SentenceCard } from './components/SentenceCard';
 import { ResultsPanel } from './components/ResultsPanel';
@@ -32,6 +32,7 @@ function App() {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [strictness, setStrictness] = useState<number>(3); // Default to 3 (stricter)
 
   // Fetch sentences from backend
   useEffect(() => {
@@ -65,6 +66,7 @@ function App() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.wav');
       formData.append('reference_text', currentSentence.text);
+      formData.append('strictness', strictness.toString());
 
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -154,6 +156,40 @@ function App() {
             totalCount={sentences.length}
           />
         </div>
+
+        {/* Strictness control */}
+        {!result && (
+          <div className="mb-6 bg-white rounded-xl shadow-md p-4 border border-gray-100 max-w-md mx-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <Settings className="w-4 h-4 text-indigo-500" />
+              <label className="text-sm font-semibold text-gray-700">
+                Grading Strictness
+              </label>
+            </div>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={strictness}
+                onChange={(e) => setStrictness(Number(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              />
+              <div className="flex flex-col items-center min-w-[80px]">
+                <span className="text-2xl font-bold text-indigo-600">{strictness}</span>
+                <span className="text-xs text-gray-500">
+                  {strictness === 1 ? 'Very Lenient' : 
+                   strictness === 2 ? 'Lenient' :
+                   strictness === 3 ? 'Balanced' :
+                   strictness === 4 ? 'Strict' : 'Very Strict'}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Higher strictness = more challenging grading
+            </p>
+          </div>
+        )}
 
         {/* Recording section or Results */}
         {!result ? (

@@ -11,11 +11,37 @@ export interface Scores {
   completeness: number;
 }
 
+export interface PhonemeDetail {
+  phoneme: string;
+  accuracy_score: number;
+}
+
+export interface WordDetail {
+  word: string;
+  accuracy_score: number;
+  error_type: string;
+  phonemes: PhonemeDetail[];
+}
+
+export interface AzureDebugData {
+  recognized_text: string;
+  words: WordDetail[];
+  overall_metrics: {
+    accuracy_score: number;
+    fluency_score: number;
+    completeness_score: number;
+    pronunciation_score: number;
+  };
+  error?: string;
+}
+
 export interface AnalysisResult {
   scores: Scores;
   coaching: string;
   mock_mode: boolean;
   mock_details: string | null;
+  azure_debug?: AzureDebugData | null;
+  strictness_level?: number;
 }
 
 export type RecordingState = 'idle' | 'recording' | 'processing';
