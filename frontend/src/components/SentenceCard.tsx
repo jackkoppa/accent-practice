@@ -178,8 +178,8 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({
         </div>
       )}
       
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-gray-600 min-w-0 truncate">
           {isCustomMode ? (
             <span className="font-bold">Focus:</span>
           ) : (
@@ -191,25 +191,25 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({
         </p>
         
         {!isCustomMode && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <button
               onClick={onPrev}
-              className="p-2 border-3 border-black bg-white shadow-neo-sm hover:shadow-neo-pressed 
+              className="p-1.5 sm:p-2 border-3 border-black bg-white shadow-neo-sm hover:shadow-neo-pressed 
                          hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
               disabled={currentIndex === 0}
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="text-sm font-bold px-2">
-              {currentIndex + 1} / {totalCount}
+            <span className="text-xs sm:text-sm font-bold whitespace-nowrap px-1">
+              {currentIndex + 1}/{totalCount}
             </span>
             <button
               onClick={onNext}
-              className="p-2 border-3 border-black bg-white shadow-neo-sm hover:shadow-neo-pressed 
+              className="p-1.5 sm:p-2 border-3 border-black bg-white shadow-neo-sm hover:shadow-neo-pressed 
                          hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-50"
               disabled={currentIndex === totalCount - 1}
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         )}
