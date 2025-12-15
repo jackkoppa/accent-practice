@@ -110,11 +110,17 @@ async def get_sentences():
 @app.post("/api/analyze")
 async def analyze_pronunciation(
     audio: UploadFile = File(...),
-    reference_text: str = Form(...)
+    reference_text: str = Form(...),
+    strictness: int = Form(3)
 ):
     """
     Analyze pronunciation from audio file.
     Returns scores and coaching tips.
+    
+    Args:
+        audio: Audio file from recording
+        reference_text: The text that should have been spoken
+        strictness: Grading strictness level (1-5, default 3 for balanced/stricter)
     """
     temp_input = None
     temp_wav = None
@@ -131,8 +137,8 @@ async def analyze_pronunciation(
         if not convert_to_wav(temp_input, temp_wav):
             raise HTTPException(status_code=400, detail="Failed to process audio. Please try recording again.")
 
-        # Get pronunciation scores from Azure
-        scores = get_pronunciation_score(temp_wav, reference_text)
+        # Get pronunciation scores from Azure with strictness parameter
+        scores = get_pronunciation_score(temp_wav, reference_text, strictness)
         
         # Check for errors
         if "error" in scores and scores.get("pronunciation", 0) == 0:
@@ -149,7 +155,9 @@ async def analyze_pronunciation(
             },
             "coaching": coaching,
             "mock_mode": scores.get("mock_data", False),
-            "mock_details": scores.get("details", None)
+            "mock_details": scores.get("details", None),
+            "azure_debug": scores.get("azure_debug", None),
+            "strictness_level": scores.get("strictness_level", strictness)
         }
         
     except HTTPException:
