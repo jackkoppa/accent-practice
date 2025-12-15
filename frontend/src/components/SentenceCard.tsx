@@ -15,6 +15,7 @@ interface SentenceCardProps {
   onToggleCustomMode?: () => void;
   wordDetails?: WordDetail[];
   showWordScores?: boolean;
+  highlightedWordIndex?: number;
 }
 
 export const SentenceCard: React.FC<SentenceCardProps> = ({
@@ -29,6 +30,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({
   onToggleCustomMode,
   wordDetails,
   showWordScores = false,
+  highlightedWordIndex = -1,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(customText || '');
@@ -130,6 +132,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({
                 referenceText={displayText}
                 wordDetails={wordDetails}
                 animate={true}
+                highlightedWordIndex={highlightedWordIndex}
               />
               {/* Color legend */}
               <div className="flex flex-wrap items-center gap-4 mt-4 pt-3 border-t border-gray-200 text-xs">

@@ -130,6 +130,9 @@ function MainPractice() {
   
   // History count for showing link
   const [historyCount, setHistoryCount] = useState(0);
+  
+  // Word highlighting during audio playback
+  const [highlightedWordIndex, setHighlightedWordIndex] = useState(-1);
 
   // Load settings and history count on mount
   useEffect(() => {
@@ -267,6 +270,7 @@ function MainPractice() {
   const handleTryAgain = () => {
     setResult(null);
     setError(null);
+    setHighlightedWordIndex(-1);
   };
 
   const handleNextSentence = () => {
@@ -391,6 +395,7 @@ function MainPractice() {
             }}
             wordDetails={result?.azure_debug?.words}
             showWordScores={!!result}
+            highlightedWordIndex={highlightedWordIndex}
           />
         </div>
 
@@ -506,6 +511,7 @@ function MainPractice() {
             strictness={strictness}
             onStrictnessChange={setStrictness}
             lastRecordingUrl={lastRecordingUrl}
+            onWordHighlight={setHighlightedWordIndex}
           />
         )}
       </main>
