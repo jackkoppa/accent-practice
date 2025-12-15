@@ -45,3 +45,17 @@ export interface AnalysisResult {
 }
 
 export type RecordingState = 'idle' | 'recording' | 'processing';
+
+export type APIErrorType = 'rate_limit' | 'quota_exceeded' | 'auth_error' | 'service_error' | 'generic';
+
+export interface APIErrorDetail {
+  message: string;
+  error_type: APIErrorType;
+  service: 'azure_speech' | 'openai';
+}
+
+export interface AppError {
+  message: string;
+  type: APIErrorType;
+  service?: string;
+}

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Mic, Volume2, Github, Settings } from 'lucide-react';
+import { Mic, Volume2, Github, Settings, AlertTriangle, Clock, CreditCard, ShieldAlert, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { AudioRecorder } from './components/AudioRecorder';
 import { SentenceCard } from './components/SentenceCard';
 import { ResultsPanel } from './components/ResultsPanel';
-import { Sentence, AnalysisResult, RecordingState } from './types';
+import { Sentence, AnalysisResult, RecordingState, AppError, APIErrorDetail } from './types';
+import { useAuth } from './auth';
 
 const DEFAULT_SENTENCES: Sentence[] = [
   {
@@ -27,27 +28,39 @@ const DEFAULT_SENTENCES: Sentence[] = [
 ];
 
 function App() {
+  const { isAuthenticated, isLoading, user, login, logout, getAccessToken, authConfigured } = useAuth();
   const [sentences, setSentences] = useState<Sentence[]>(DEFAULT_SENTENCES);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const [strictness, setStrictness] = useState<number>(3); // Default to 3 (stricter)
 
   // Fetch sentences from backend
   useEffect(() => {
-    fetch('/api/sentences')
-      .then(res => res.json())
-      .then(data => {
+    if (!isAuthenticated) return;
+    
+    const fetchSentences = async () => {
+      const headers: HeadersInit = {};
+      const token = getAccessToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      try {
+        const res = await fetch('/api/sentences', { headers });
+        const data = await res.json();
         if (data.sentences) {
           setSentences(data.sentences);
         }
-      })
-      .catch(() => {
+      } catch {
         // Use default sentences if backend is not available
         console.log('Using default sentences (backend not available)');
-      });
-  }, []);
+      }
+    };
+    
+    fetchSentences();
+  }, [isAuthenticated, getAccessToken]);
 
   const currentSentence = sentences[currentSentenceIndex];
 
@@ -68,20 +81,46 @@ function App() {
       formData.append('reference_text', currentSentence.text);
       formData.append('strictness', strictness.toString());
 
+      const headers: HeadersInit = {};
+      const token = getAccessToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/analyze', {
         method: 'POST',
+        headers,
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Analysis failed');
+        
+        // Check if it's a structured API error
+        if (errorData.detail && typeof errorData.detail === 'object') {
+          const detail = errorData.detail as APIErrorDetail;
+          setError({
+            message: detail.message,
+            type: detail.error_type,
+            service: detail.service
+          });
+        } else {
+          // Generic error
+          setError({
+            message: typeof errorData.detail === 'string' ? errorData.detail : 'Analysis failed',
+            type: 'generic'
+          });
+        }
+        return;
       }
 
       const data: AnalysisResult = await response.json();
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError({
+        message: err instanceof Error ? err.message : 'An error occurred',
+        type: 'generic'
+      });
     } finally {
       setRecordingState('idle');
     }
@@ -108,6 +147,47 @@ function App() {
     }
   };
 
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated && authConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Mic className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">AI Accent Coach</h1>
+            <p className="text-gray-600 mb-8">
+              Improve your English pronunciation with AI-powered feedback
+            </p>
+            <button
+              onClick={login}
+              className="w-full py-3 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-5 h-5" />
+              Sign In to Continue
+            </button>
+            <p className="text-xs text-gray-500 mt-6">
+              Access is limited to authorized users only.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -122,14 +202,30 @@ function App() {
               <p className="text-xs text-gray-500">Perfect your pronunciation</p>
             </div>
           </div>
-          <a 
-            href="https://github.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Github className="w-5 h-5 text-gray-600" />
-          </a>
+          <div className="flex items-center gap-3">
+            {user && (
+              <span className="text-sm text-gray-600 hidden sm:inline">
+                {user.email}
+              </span>
+            )}
+            {authConfigured && (
+              <button
+                onClick={logout}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 text-gray-600"
+                title="Sign out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
+            <a 
+              href="https://github.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Github className="w-5 h-5 text-gray-600" />
+            </a>
+          </div>
         </div>
       </header>
 
@@ -202,13 +298,74 @@ function App() {
             />
             
             {error && (
-              <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 max-w-md">
-                <p className="text-red-700 text-center">{error}</p>
+              <div className={`mt-6 rounded-xl p-4 max-w-md border ${
+                error.type === 'rate_limit' 
+                  ? 'bg-amber-50 border-amber-200' 
+                  : error.type === 'quota_exceeded'
+                  ? 'bg-orange-50 border-orange-200'
+                  : error.type === 'auth_error'
+                  ? 'bg-purple-50 border-purple-200'
+                  : 'bg-red-50 border-red-200'
+              }`}>
+                <div className="flex items-start gap-3">
+                  {error.type === 'rate_limit' ? (
+                    <Clock className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  ) : error.type === 'quota_exceeded' ? (
+                    <CreditCard className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                  ) : error.type === 'auth_error' ? (
+                    <ShieldAlert className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <p className={`font-medium ${
+                      error.type === 'rate_limit' 
+                        ? 'text-amber-800' 
+                        : error.type === 'quota_exceeded'
+                        ? 'text-orange-800'
+                        : error.type === 'auth_error'
+                        ? 'text-purple-800'
+                        : 'text-red-800'
+                    }`}>
+                      {error.type === 'rate_limit' 
+                        ? 'Rate Limit Reached' 
+                        : error.type === 'quota_exceeded'
+                        ? 'API Quota Exceeded'
+                        : error.type === 'auth_error'
+                        ? 'Authentication Error'
+                        : 'Error'}
+                    </p>
+                    <p className={`text-sm mt-1 ${
+                      error.type === 'rate_limit' 
+                        ? 'text-amber-700' 
+                        : error.type === 'quota_exceeded'
+                        ? 'text-orange-700'
+                        : error.type === 'auth_error'
+                        ? 'text-purple-700'
+                        : 'text-red-700'
+                    }`}>
+                      {error.message}
+                    </p>
+                    {error.service && (
+                      <p className="text-xs mt-2 opacity-75">
+                        Service: {error.service === 'azure_speech' ? 'Azure Speech' : 'OpenAI'}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 <button
                   onClick={() => setError(null)}
-                  className="mt-2 w-full py-2 text-red-600 hover:text-red-700 font-medium"
+                  className={`mt-3 w-full py-2 font-medium rounded-lg ${
+                    error.type === 'rate_limit' 
+                      ? 'text-amber-600 hover:bg-amber-100' 
+                      : error.type === 'quota_exceeded'
+                      ? 'text-orange-600 hover:bg-orange-100'
+                      : error.type === 'auth_error'
+                      ? 'text-purple-600 hover:bg-purple-100'
+                      : 'text-red-600 hover:bg-red-100'
+                  }`}
                 >
-                  Try Again
+                  {error.type === 'rate_limit' ? 'Wait & Try Again' : 'Dismiss'}
                 </button>
               </div>
             )}
