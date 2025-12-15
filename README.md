@@ -49,30 +49,18 @@ flowchart TB
 ### Quick Start
 
 ```bash
-# 1. Setup backend
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp env.example .env  # Then add your API keys
+# One-time setup (installs dependencies, creates .env template)
+./setup.sh
 
-# 2. Setup frontend
-cd ../frontend
-npm install
-
-# 3. Run both (two terminals)
-# Terminal 1 - Backend
-cd backend && source venv/bin/activate && uvicorn main:app --reload --port 8000
-
-# Terminal 2 - Frontend
-cd frontend && npm run dev
+# Start both servers
+./start.sh
 ```
 
 Open http://localhost:5173
 
-### API Keys for Local Development
+### API Keys
 
-Create `backend/.env`:
+Edit `backend/.env` with your keys (created by setup.sh):
 ```
 AZURE_SPEECH_KEY=your-key
 AZURE_SPEECH_REGION=eastus
