@@ -7,6 +7,15 @@ except ImportError:
     speechsdk = None
 
 
+class APIError(Exception):
+    """Custom exception for API errors with error type classification."""
+    def __init__(self, message: str, error_type: str, details: str = None):
+        self.message = message
+        self.error_type = error_type  # 'rate_limit', 'quota_exceeded', 'auth_error', 'service_error'
+        self.details = details
+        super().__init__(self.message)
+
+
 def parse_azure_response(result_json: str) -> dict:
     """
     Parse Azure's detailed JSON response to extract useful debugging information.
@@ -197,8 +206,57 @@ def get_pronunciation_score(audio_filepath: str, reference_text: str, strictness
             }
         elif result.reason == speechsdk.ResultReason.NoMatch:
             return {"pronunciation": 0, "error": "No speech recognized."}
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation = speechsdk.CancellationDetails(result)
+            error_msg = str(cancellation.error_details) if cancellation.error_details else "Speech analysis canceled"
+            
+            # Check for rate limiting or quota errors
+            if "429" in error_msg or "rate limit" in error_msg.lower() or "too many requests" in error_msg.lower():
+                raise APIError(
+                    "Azure Speech API rate limit exceeded. Please wait a moment and try again.",
+                    "rate_limit",
+                    error_msg
+                )
+            elif "quota" in error_msg.lower() or "exceeded" in error_msg.lower() or "limit" in error_msg.lower():
+                raise APIError(
+                    "Azure Speech API quota exceeded. The monthly limit has been reached. Please contact the app administrator.",
+                    "quota_exceeded",
+                    error_msg
+                )
+            elif "401" in error_msg or "403" in error_msg or "unauthorized" in error_msg.lower() or "invalid" in error_msg.lower():
+                raise APIError(
+                    "Azure Speech API authentication failed. Please contact the app administrator.",
+                    "auth_error",
+                    error_msg
+                )
+            else:
+                return {"pronunciation": 0, "error": f"Speech analysis canceled: {error_msg}"}
         else:
             return {"pronunciation": 0, "error": "Speech analysis failed."}
              
+    except APIError:
+        raise  # Re-raise APIError to be handled by the caller
     except Exception as e:
+        error_msg = str(e)
+        
+        # Check for common Azure error patterns
+        if "429" in error_msg or "rate limit" in error_msg.lower():
+            raise APIError(
+                "Azure Speech API rate limit exceeded. Please wait a moment and try again.",
+                "rate_limit",
+                error_msg
+            )
+        elif "quota" in error_msg.lower() or "exceeded" in error_msg.lower():
+            raise APIError(
+                "Azure Speech API quota exceeded. The monthly limit has been reached. Please contact the app administrator.",
+                "quota_exceeded",
+                error_msg
+            )
+        elif "401" in error_msg or "403" in error_msg or "unauthorized" in error_msg.lower():
+            raise APIError(
+                "Azure Speech API authentication failed. Please contact the app administrator.",
+                "auth_error",
+                error_msg
+            )
+        
         return {"pronunciation": 0, "error": str(e)}

@@ -2,13 +2,15 @@ import os
 import io
 import wave
 import tempfile
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+
+from auth import get_current_user, require_auth
 from dotenv import load_dotenv
 from pydub import AudioSegment
 
-from grading_engine import get_pronunciation_score
-from coaching_engine import get_coaching_tips
+from grading_engine import get_pronunciation_score, APIError
+from coaching_engine import get_coaching_tips, CoachingAPIError
 
 
 def convert_to_wav(input_path: str, output_path: str) -> bool:
@@ -53,9 +55,22 @@ load_dotenv()
 app = FastAPI(title="AI Accent Coach API")
 
 # Configure CORS for frontend
+# In production, CORS is handled by CloudFront/API Gateway
+# These origins are for local development
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://127.0.0.1:5173",
+]
+
+# Add production domain from environment if set
+PRODUCTION_DOMAIN = os.getenv("FRONTEND_DOMAIN")
+if PRODUCTION_DOMAIN:
+    ALLOWED_ORIGINS.append(f"https://{PRODUCTION_DOMAIN}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,6 +124,7 @@ async def get_sentences():
 
 @app.post("/api/analyze")
 async def analyze_pronunciation(
+    request: Request,
     audio: UploadFile = File(...),
     reference_text: str = Form(...),
     strictness: int = Form(3)
@@ -118,10 +134,15 @@ async def analyze_pronunciation(
     Returns scores and coaching tips.
     
     Args:
+        request: FastAPI request object (for auth context)
         audio: Audio file from recording
         reference_text: The text that should have been spoken
         strictness: Grading strictness level (1-5, default 3 for balanced/stricter)
     """
+    # Get current user (for logging/tracking)
+    user = get_current_user(request)
+    if user:
+        print(f"Analyze request from user: {user.email or user.sub}")
     temp_input = None
     temp_wav = None
     
@@ -162,6 +183,26 @@ async def analyze_pronunciation(
         
     except HTTPException:
         raise
+    except APIError as e:
+        # Azure Speech API errors (rate limit, quota, auth)
+        raise HTTPException(
+            status_code=429 if e.error_type == "rate_limit" else 503,
+            detail={
+                "message": e.message,
+                "error_type": e.error_type,
+                "service": "azure_speech"
+            }
+        )
+    except CoachingAPIError as e:
+        # OpenAI API errors (rate limit, quota, auth)
+        raise HTTPException(
+            status_code=429 if e.error_type == "rate_limit" else 503,
+            detail={
+                "message": e.message,
+                "error_type": e.error_type,
+                "service": "openai"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:

@@ -1,5 +1,14 @@
 import os
-from openai import OpenAI
+from openai import OpenAI, RateLimitError, APIError as OpenAIAPIError, AuthenticationError
+
+
+class CoachingAPIError(Exception):
+    """Custom exception for coaching API errors with error type classification."""
+    def __init__(self, message: str, error_type: str, details: str = None):
+        self.message = message
+        self.error_type = error_type  # 'rate_limit', 'quota_exceeded', 'auth_error', 'service_error'
+        self.details = details
+        super().__init__(self.message)
 
 
 def get_coaching_tips(reference_text: str, scores: dict) -> str:
@@ -35,5 +44,39 @@ def get_coaching_tips(reference_text: str, scores: dict) -> str:
             messages=[{"role": "user", "content": prompt}]
         )
         return response.choices[0].message.content
+    except RateLimitError as e:
+        error_msg = str(e)
+        # Check if it's a quota exceeded error vs rate limit
+        if "quota" in error_msg.lower() or "exceeded" in error_msg.lower() or "billing" in error_msg.lower():
+            raise CoachingAPIError(
+                "OpenAI API quota exceeded. The billing limit has been reached. Please contact the app administrator.",
+                "quota_exceeded",
+                error_msg
+            )
+        else:
+            raise CoachingAPIError(
+                "OpenAI API rate limit exceeded. Please wait a moment and try again.",
+                "rate_limit",
+                error_msg
+            )
+    except AuthenticationError as e:
+        raise CoachingAPIError(
+            "OpenAI API authentication failed. Please contact the app administrator.",
+            "auth_error",
+            str(e)
+        )
+    except OpenAIAPIError as e:
+        error_msg = str(e)
+        if "429" in error_msg:
+            raise CoachingAPIError(
+                "OpenAI API rate limit exceeded. Please wait a moment and try again.",
+                "rate_limit",
+                error_msg
+            )
+        raise CoachingAPIError(
+            "OpenAI service error. Please try again later.",
+            "service_error",
+            error_msg
+        )
     except Exception as e:
         return f"Error connecting to Coach: {str(e)}"

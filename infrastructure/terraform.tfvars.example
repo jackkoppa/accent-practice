@@ -1,0 +1,24 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region  = "us-east-1"
+environment = "prod"
+app_name    = "accent-practice"
+
+# Domain Configuration
+# You'll need to have a Route53 hosted zone already created for your domain
+domain_name     = "accent.yourdomain.com"
+route53_zone_id = "YOUR_ROUTE53_ZONE_ID"
+
+# API Keys (keep these secret!)
+azure_speech_key    = "your-azure-speech-key"
+azure_speech_region = "eastus"
+openai_api_key      = "sk-your-openai-api-key"
+
+# Users to create in Cognito (add your users' emails here)
+cognito_users = [
+  "user1@example.com",
+  "user2@example.com",
+  "user3@example.com",
+]
+
