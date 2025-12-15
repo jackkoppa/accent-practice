@@ -21,6 +21,9 @@ export interface WordDetail {
   accuracy_score: number;
   error_type: string;
   phonemes: PhonemeDetail[];
+  // Azure may provide timing info - optional
+  offset?: number;
+  duration?: number;
 }
 
 export interface AzureDebugData {
@@ -58,4 +61,22 @@ export interface AppError {
   message: string;
   type: APIErrorType;
   service?: string;
+}
+
+// History storage types
+// TODO: This will eventually be moved to DynamoDB
+export interface HistoryEntry {
+  id: string;
+  timestamp: number;
+  referenceText: string;
+  scores: Scores;
+  overallScore: number;
+  coaching: string;
+  wordDetails?: WordDetail[];
+  strictnessLevel?: number;
+}
+
+export interface AppSettings {
+  debugMode: boolean;
+  strictness: number;
 }

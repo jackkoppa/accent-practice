@@ -38,6 +38,9 @@ def parse_azure_response(result_json: str) -> dict:
                 "word": word_data.get('Word', ''),
                 "accuracy_score": round(word_data.get('PronunciationAssessment', {}).get('AccuracyScore', 0), 1),
                 "error_type": word_data.get('PronunciationAssessment', {}).get('ErrorType', 'None'),
+                # Include timing information for audio playback animation
+                "offset": word_data.get('Offset'),  # Offset in 100-nanosecond units
+                "duration": word_data.get('Duration'),  # Duration in 100-nanosecond units
             }
             
             # Extract phonemes for this word
@@ -88,17 +91,21 @@ def get_pronunciation_score(audio_filepath: str, reference_text: str, strictness
     
     # MOCK MODE: If keys are missing, return dummy data for UI testing
     if not azure_key or not azure_region:
+        mock_words = []
+        offset = 0
+        for word in reference_text.split():
+            mock_words.append({
+                "word": word,
+                "accuracy_score": 82.5,
+                "error_type": "None",
+                "phonemes": [{"phoneme": "mock", "accuracy_score": 85.0}],
+                "offset": offset * 10000000,  # Mock timing in 100-nanosecond units
+                "duration": 5000000,  # ~500ms per word
+            })
+            offset += 500  # 500ms between words
         mock_debug_data = {
             "recognized_text": reference_text,
-            "words": [
-                {
-                    "word": word,
-                    "accuracy_score": 82.5,
-                    "error_type": "None",
-                    "phonemes": [{"phoneme": "mock", "accuracy_score": 85.0}]
-                }
-                for word in reference_text.split()[:3]  # Just show first 3 words in mock
-            ],
+            "words": mock_words,
             "overall_metrics": {
                 "accuracy_score": 85.0,
                 "fluency_score": 90.0,
@@ -117,17 +124,21 @@ def get_pronunciation_score(audio_filepath: str, reference_text: str, strictness
 
     # Check if Azure SDK is available
     if speechsdk is None:
+        mock_words = []
+        offset = 0
+        for word in reference_text.split():
+            mock_words.append({
+                "word": word,
+                "accuracy_score": 82.5,
+                "error_type": "None",
+                "phonemes": [{"phoneme": "mock", "accuracy_score": 85.0}],
+                "offset": offset * 10000000,  # Mock timing in 100-nanosecond units
+                "duration": 5000000,  # ~500ms per word
+            })
+            offset += 500  # 500ms between words
         mock_debug_data = {
             "recognized_text": reference_text,
-            "words": [
-                {
-                    "word": word,
-                    "accuracy_score": 82.5,
-                    "error_type": "None",
-                    "phonemes": [{"phoneme": "mock", "accuracy_score": 85.0}]
-                }
-                for word in reference_text.split()[:3]
-            ],
+            "words": mock_words,
             "overall_metrics": {
                 "accuracy_score": 85.0,
                 "fluency_score": 90.0,

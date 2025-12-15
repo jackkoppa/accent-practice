@@ -67,39 +67,39 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       case 'recording':
         return (
           <>
-            <Square className="w-8 h-8" />
-            <span>Stop Recording</span>
+            <Square className="w-10 h-10" />
+            <span className="text-lg font-black">STOP</span>
           </>
         );
       case 'processing':
         return (
           <>
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <span>Analyzing...</span>
+            <Loader2 className="w-10 h-10 animate-spin" />
+            <span className="text-lg font-black">ANALYZING...</span>
           </>
         );
       default:
         return (
           <>
-            <Mic className="w-8 h-8" />
-            <span>Start Recording</span>
+            <Mic className="w-10 h-10" />
+            <span className="text-lg font-black">RECORD</span>
           </>
         );
     }
   };
 
   const getButtonStyles = () => {
-    const base = "flex flex-col items-center justify-center gap-2 w-40 h-40 rounded-full font-semibold transition-all duration-300 shadow-lg";
+    const base = "flex flex-col items-center justify-center gap-2 w-40 h-40 font-black transition-all duration-150 border-3 border-black";
     
     if (disabled || recordingState === 'processing') {
       return `${base} bg-gray-300 text-gray-500 cursor-not-allowed`;
     }
     
     if (recordingState === 'recording') {
-      return `${base} bg-red-500 hover:bg-red-600 text-white recording-pulse shadow-red-300`;
+      return `${base} bg-neo-error text-white recording-pulse shadow-neo`;
     }
     
-    return `${base} bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white hover:scale-105 shadow-indigo-300`;
+    return `${base} bg-neo-main text-black shadow-neo hover:shadow-neo-lg hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-neo-pressed active:translate-x-[3px] active:translate-y-[3px]`;
   };
 
   return (
@@ -113,14 +113,15 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       </button>
       
       {recordingState === 'recording' && (
-        <p className="text-red-500 font-medium animate-pulse">
-          🔴 Recording... Click to stop
+        <p className="text-neo-error font-black animate-pulse flex items-center gap-2">
+          <span className="w-3 h-3 bg-neo-error rounded-full animate-pulse" />
+          Recording... Click to stop
         </p>
       )}
       
       {recordingState === 'idle' && (
-        <p className="text-gray-500 text-sm">
-          Click to start recording your voice
+        <p className="text-gray-600 font-medium">
+          Click to start recording
         </p>
       )}
     </div>

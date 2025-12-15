@@ -2,37 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen;
+:root {
+  --neo-bg: #e0e5ec;
+  --neo-main: #88aaee;
+  --neo-accent: #a388ee;
+  --neo-success: #44cc77;
+  --neo-warning: #ffcc44;
+  --neo-error: #ff6b6b;
 }
 
-/* Custom scrollbar */
+body {
+  @apply bg-neo-bg min-h-screen;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Neo-brutalism base button styles */
+.neo-btn {
+  @apply px-6 py-3 font-bold border-3 border-black bg-white 
+         shadow-neo transition-all duration-150 active:shadow-neo-pressed 
+         active:translate-x-[3px] active:translate-y-[3px];
+}
+
+.neo-btn-primary {
+  @apply neo-btn bg-neo-main hover:bg-blue-400;
+}
+
+.neo-btn-accent {
+  @apply neo-btn bg-neo-accent hover:bg-purple-400;
+}
+
+.neo-btn-success {
+  @apply neo-btn bg-neo-success hover:bg-green-400;
+}
+
+.neo-btn-warning {
+  @apply neo-btn bg-neo-warning hover:bg-yellow-300;
+}
+
+.neo-btn-error {
+  @apply neo-btn bg-neo-error hover:bg-red-400;
+}
+
+/* Neo-brutalism card styles */
+.neo-card {
+  @apply bg-white border-3 border-black shadow-neo p-6;
+}
+
+/* Neo-brutalism input styles */
+.neo-input {
+  @apply w-full px-4 py-3 font-medium border-3 border-black bg-white 
+         focus:outline-none focus:ring-0 focus:shadow-neo-sm;
+}
+
+/* Custom scrollbar - neo style */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
+  @apply bg-neo-bg border-l-2 border-black;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full hover:bg-gray-400;
+  @apply bg-neo-main border-2 border-black;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-blue-400;
 }
 
 /* Recording animation */
 @keyframes recording-pulse {
   0%, 100% {
     transform: scale(1);
-    opacity: 1;
+    box-shadow: 4px 4px 0px 0px #000;
   }
   50% {
-    transform: scale(1.1);
-    opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: 6px 6px 0px 0px #000;
   }
 }
 
 .recording-pulse {
-  animation: recording-pulse 1.5s ease-in-out infinite;
+  animation: recording-pulse 1s ease-in-out infinite;
 }
 
 /* Score ring animation */
@@ -44,4 +96,43 @@ body {
 
 .score-ring {
   animation: score-fill 1s ease-out forwards;
+}
+
+/* Word animation for results */
+@keyframes word-color-reveal {
+  0% {
+    opacity: 0.3;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.word-animate {
+  animation: word-color-reveal 0.4s ease-out forwards;
+}
+
+/* Menu overlay */
+.menu-overlay {
+  @apply fixed inset-0 bg-black/30 z-40 transition-opacity;
+}
+
+/* Slider neo-brutalism style */
+input[type="range"] {
+  @apply appearance-none w-full h-4 bg-white border-3 border-black cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-6 h-6 bg-neo-main border-3 border-black cursor-pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply w-6 h-6 bg-neo-main border-3 border-black cursor-pointer;
+}
+
+/* Chart tooltip styling */
+.recharts-tooltip-wrapper {
+  @apply !border-3 !border-black !shadow-neo;
 }

@@ -13,15 +13,15 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
   color,
   size = 120 
 }) => {
-  const strokeWidth = 8;
+  const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (score / 100) * circumference;
 
   const getScoreColor = () => {
-    if (score >= 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    return 'text-red-500';
+    if (score >= 80) return 'text-neo-success';
+    if (score >= 60) return 'text-neo-warning';
+    return 'text-neo-error';
   };
 
   return (
@@ -46,7 +46,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             stroke={color}
             strokeWidth={strokeWidth}
             fill="none"
-            strokeLinecap="round"
+            strokeLinecap="square"
             className="score-ring"
             style={{
               strokeDasharray: circumference,
@@ -54,14 +54,19 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             }}
           />
         </svg>
+        {/* Border around the ring */}
+        <div 
+          className="absolute inset-0 border-3 border-black rounded-full"
+          style={{ margin: strokeWidth / 2 }}
+        />
         {/* Score text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-2xl font-bold ${getScoreColor()}`}>
+          <span className={`text-2xl font-black ${getScoreColor()}`}>
             {Math.round(score)}
           </span>
         </div>
       </div>
-      <span className="mt-2 text-sm font-medium text-gray-600">{label}</span>
+      <span className="mt-2 text-sm font-black">{label}</span>
     </div>
   );
 };
