@@ -11,6 +11,7 @@ interface ResultsPanelProps {
   strictness?: number;
   onStrictnessChange?: (value: number) => void;
   lastRecordingUrl?: string | null;
+  onWordHighlight?: (wordIndex: number) => void;
 }
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({ 
@@ -20,6 +21,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   strictness = 3,
   onStrictnessChange,
   lastRecordingUrl,
+  onWordHighlight,
 }) => {
   const { scores, coaching, mock_mode, mock_details, azure_debug, strictness_level } = result;
   const [debugExpanded, setDebugExpanded] = useState(false);
@@ -56,6 +58,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
         <AudioPlayback
           audioUrl={lastRecordingUrl}
           wordDetails={azure_debug?.words}
+          onWordHighlight={onWordHighlight}
         />
       )}
 
