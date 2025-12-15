@@ -360,7 +360,7 @@ function App() {
             Improve Your Pronunciation
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Read the sentence aloud. Our AI will analyze your pronunciation and provide feedback.
+            Read the sentence aloud. The system will analyze your pronunciation and provide feedback.
           </p>
         </div>
 
