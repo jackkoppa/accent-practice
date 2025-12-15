@@ -110,7 +110,8 @@ resource "aws_cloudfront_distribution" "frontend" {
 
   # API Gateway origin for /api/* paths
   origin {
-    domain_name = replace(aws_apigatewayv2_stage.api.invoke_url, "https://", "")
+    # Extract just the domain from the invoke URL (remove https:// and trailing path)
+    domain_name = replace(replace(aws_apigatewayv2_stage.api.invoke_url, "https://", ""), "/", "")
     origin_id   = "APIOrigin"
 
     custom_origin_config {

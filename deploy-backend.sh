@@ -68,9 +68,10 @@ echo "Logging in to ECR..."
 aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
 # Build Docker image
+# --provenance=false prevents Docker from adding attestation manifests that Lambda doesn't support
 echo "Building Docker image..."
 cd backend
-docker build --platform linux/amd64 -t accent-practice-backend .
+docker build --platform linux/amd64 --provenance=false -t accent-practice-backend .
 cd ..
 
 # Tag image for ECR
