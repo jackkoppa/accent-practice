@@ -79,6 +79,23 @@ export const HistoryDetail: React.FC<HistoryDetailProps> = ({ entryId, onBack })
             wordDetails={entry.wordDetails}
             animate={false}
           />
+          {/* Color legend */}
+          {entry.wordDetails && entry.wordDetails.length > 0 && (
+            <div className="flex flex-wrap items-center gap-4 mt-4 pt-3 border-t border-gray-200 text-xs">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-neo-success border border-black"></span>
+                Correct (80%+)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-neo-warning border border-black"></span>
+                Partial (60-79%)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-neo-error border border-black"></span>
+                Needs Work (&lt;60%)
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Overall score banner */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Mic, Menu as MenuIcon, LogIn, Loader2, AlertTriangle, Clock, CreditCard, ShieldAlert, Settings } from 'lucide-react';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { Mic, Menu as MenuIcon, LogIn, Loader2, AlertTriangle, Clock, CreditCard, ShieldAlert, Settings, History } from 'lucide-react';
 import { AudioRecorder } from './components/AudioRecorder';
 import { SentenceCard } from './components/SentenceCard';
 import { ResultsPanel } from './components/ResultsPanel';
@@ -8,7 +9,7 @@ import { HistoryView } from './components/HistoryView';
 import { HistoryDetail } from './components/HistoryDetail';
 import { Sentence, AnalysisResult, RecordingState, AppError, APIErrorDetail, HistoryEntry } from './types';
 import { useAuth } from './auth';
-import { getSettings, saveSettings, saveHistoryEntry, generateId } from './storage';
+import { getSettings, saveSettings, saveHistoryEntry, generateId, getHistory } from './storage';
 
 const DEFAULT_SENTENCES: Sentence[] = [
   {
@@ -73,9 +74,39 @@ const DEFAULT_SENTENCES: Sentence[] = [
   },
 ];
 
-type ViewState = 'main' | 'history' | 'history-detail';
+// History Detail Route Component
+function HistoryDetailRoute() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  if (!id) {
+    navigate('/history');
+    return null;
+  }
+  
+  return (
+    <HistoryDetail
+      entryId={id}
+      onBack={() => navigate('/history')}
+    />
+  );
+}
 
-function App() {
+// History Route Component  
+function HistoryRoute() {
+  const navigate = useNavigate();
+  
+  return (
+    <HistoryView 
+      onBack={() => navigate('/')}
+      onSelectEntry={(id) => navigate(`/history/${id}`)}
+    />
+  );
+}
+
+// Main Practice Component
+function MainPractice() {
+  const navigate = useNavigate();
   const { isAuthenticated, isLoading, user, login, logout, getAccessToken, authConfigured } = useAuth();
   const [sentences, setSentences] = useState<Sentence[]>(DEFAULT_SENTENCES);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
@@ -97,15 +128,15 @@ function App() {
   // Audio playback state (for ResultsPanel)
   const [lastRecordingUrl, setLastRecordingUrl] = useState<string | null>(null);
   
-  // View state (for history)
-  const [viewState, setViewState] = useState<ViewState>('main');
-  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
+  // History count for showing link
+  const [historyCount, setHistoryCount] = useState(0);
 
-  // Load settings on mount
+  // Load settings and history count on mount
   useEffect(() => {
     const settings = getSettings();
     setDebugMode(settings.debugMode);
     setStrictness(settings.strictness);
+    setHistoryCount(getHistory().length);
   }, []);
 
   // Save settings when they change
@@ -221,6 +252,7 @@ function App() {
       };
       
       saveHistoryEntry(historyEntry);
+      setHistoryCount(prev => prev + 1);
       
     } catch (err) {
       setError({
@@ -294,28 +326,6 @@ function App() {
     );
   }
 
-  // History views
-  if (viewState === 'history') {
-    return (
-      <HistoryView 
-        onBack={() => setViewState('main')}
-        onSelectEntry={(id) => {
-          setSelectedHistoryId(id);
-          setViewState('history-detail');
-        }}
-      />
-    );
-  }
-
-  if (viewState === 'history-detail' && selectedHistoryId) {
-    return (
-      <HistoryDetail
-        entryId={selectedHistoryId}
-        onBack={() => setViewState('history')}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen bg-neo-bg">
       {/* Menu */}
@@ -326,7 +336,7 @@ function App() {
         onLogout={logout}
         debugMode={debugMode}
         onDebugModeChange={setDebugMode}
-        onViewHistory={() => setViewState('history')}
+        onViewHistory={() => navigate('/history')}
         authConfigured={authConfigured}
       />
 
@@ -476,6 +486,17 @@ function App() {
                 </button>
               </div>
             )}
+
+            {/* History link - show only if there's history */}
+            {historyCount > 0 && (
+              <button
+                onClick={() => navigate('/history')}
+                className="mt-8 neo-btn flex items-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                View Practice History ({historyCount})
+              </button>
+            )}
           </div>
         ) : (
           <ResultsPanel 
@@ -484,7 +505,6 @@ function App() {
             debugMode={debugMode}
             strictness={strictness}
             onStrictnessChange={setStrictness}
-            referenceText={activeText}
             lastRecordingUrl={lastRecordingUrl}
           />
         )}
@@ -499,6 +519,16 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<MainPractice />} />
+      <Route path="/history" element={<HistoryRoute />} />
+      <Route path="/history/:id" element={<HistoryDetailRoute />} />
+    </Routes>
   );
 }
 

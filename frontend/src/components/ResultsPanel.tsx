@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Trophy, AlertCircle, Sparkles, ChevronDown, ChevronUp, Bug, Settings } from 'lucide-react';
 import { ScoreRing } from './ScoreRing';
 import { AnalysisResult } from '../types';
-import { AnimatedWords } from './AnimatedWords';
 import { AudioPlayback } from './AudioPlayback';
 
 interface ResultsPanelProps {
@@ -11,7 +10,6 @@ interface ResultsPanelProps {
   debugMode?: boolean;
   strictness?: number;
   onStrictnessChange?: (value: number) => void;
-  referenceText?: string;
   lastRecordingUrl?: string | null;
 }
 
@@ -21,12 +19,10 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   debugMode = false,
   strictness = 3,
   onStrictnessChange,
-  referenceText,
   lastRecordingUrl,
 }) => {
   const { scores, coaching, mock_mode, mock_details, azure_debug, strictness_level } = result;
   const [debugExpanded, setDebugExpanded] = useState(false);
-  const [highlightedWordIndex, setHighlightedWordIndex] = useState(-1);
   
   const overallScore = Math.round(
     (scores.pronunciation + scores.fluency + scores.completeness) / 3
@@ -55,40 +51,11 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
         </div>
       )}
 
-      {/* Word-by-word results */}
-      {referenceText && azure_debug?.words && (
-        <div className="neo-card">
-          <p className="text-xs font-bold text-gray-500 uppercase mb-3">Your Pronunciation</p>
-          <AnimatedWords
-            referenceText={referenceText}
-            wordDetails={azure_debug.words}
-            animate={true}
-            highlightedWordIndex={highlightedWordIndex}
-          />
-          <div className="flex flex-wrap items-center gap-4 mt-4 text-xs">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-neo-success border border-black"></span>
-              Correct (80%+)
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-neo-warning border border-black"></span>
-              Partial (60-79%)
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-neo-error border border-black"></span>
-              Needs Work (&lt;60%)
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Audio Playback */}
-      {lastRecordingUrl && referenceText && (
+      {lastRecordingUrl && (
         <AudioPlayback
           audioUrl={lastRecordingUrl}
           wordDetails={azure_debug?.words}
-          referenceText={referenceText}
-          onWordHighlight={setHighlightedWordIndex}
         />
       )}
 
